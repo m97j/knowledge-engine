@@ -1,0 +1,45 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "api/**"
+      - "core/**"
+      - "models/**"
+      - "services/**"
+      - "storage/**"
+      - "scripts/setup_db.py"
+      - "templates/**"
+      - "static/**"
+      - "utils/**"
+      - "main.py"
+      - "Dockerfile"
+      - "requirements.txt"
+      - ".github/workflows/deploy.yml"
+      - "README.md"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install HF CLI
+        run: pip install "huggingface_hub[cli]"
+
+      - name: Push to HF Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git remote add hf https://m97j:$HF_TOKEN@huggingface.co/spaces/m97j/knowledge-engine
+          
+          git push --force hf main

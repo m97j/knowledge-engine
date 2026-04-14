@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Hybrid Knowledge Engine</title>
+  <style>
+    body {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .search-box {
+      background: #f4f4f4;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .result-item {
+      border-bottom: 1px solid #eee;
+      padding: 15px 0;
+    }
+
+    .metadata {
+      font-size: 0.85em;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .score {
+      color: #2c3e50;
+      font-weight: bold;
+      background: #ecf0f1;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .content {
+      margin-top: 10px;
+      color: #333;
+    }
+
+    .latency {
+      color: #999;
+      font-size: 0.9em;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Knowledge Engine</h1>
+
+  <div class="search-box">
+    <form method="post" action="/api/v1/search/demo">
+      <input type="text" name="query" value="{{ query }}" placeholder="Enter Query" style="width: 80%; padding: 10px;"
+        required>
+      <button type="submit" style="padding: 10px 20px; cursor: pointer;">Search</button>
+    </form>
+  </div>
+
+  {% if results is not none %}
+  <div class="latency">Search time: {{ latency_ms }}ms</div>
+  <h2>Results for "{{ query }}"</h2>
+
+  {% if results|length > 0 %}
+  {% for r in results %}
+  <div class="result-item">
+    <div class="metadata">
+      <span class="score">Score: {{ r.score }}</span> |
+      <strong>source: {{ r.metadata.title }}</strong>
+      {% if r.metadata.url %} | <a href="{{ r.metadata.url }}" target="_blank">Link</a>{% endif %}
+    </div>
+    <div class="content">
+      {{ r.text }}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p>No search results found.</p>
+  {% endif %}
+  {% endif %}
+
+  {% if error_message %}
+  <p style="color: red;">{{ error_message }}</p>
+  {% endif %}
+</body>
+
+</html>
