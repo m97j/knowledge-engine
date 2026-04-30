@@ -28,7 +28,9 @@ async def execute_search(
     try:
         search_output = search_service.search(
             query=request_data.query, 
-            top_k=request_data.top_k
+            top_k=request_data.top_k,
+            use_reranking=request_data.use_reranking,
+            include_llm_context=request_data.include_llm_context
         )
         return SearchResponse(
             query=search_output["query"], 
@@ -66,7 +68,7 @@ async def demo_page_post(
     Handle form submission from the demo page, execute the search, and render results in the same template.
     """
     try:
-        search_output = search_service.search(query=query, top_k=5)
+        search_output = search_service.search(query=query, top_k=5, use_reranking=False, include_llm_context=False)
         
         return templates.TemplateResponse(
             "index.html",

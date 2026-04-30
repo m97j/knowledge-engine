@@ -24,13 +24,14 @@ class HybridSearchService:
         self.embedder = embedder
         self.reranker = reranker
 
-    def search(self, query: str, top_k: int = 5, limit: int = 50, include_llm_context: bool = True) -> Dict[str, Any]:
+    def search(self, query: str, top_k: int = 5, limit: int = 50, use_reranking: bool = True, include_llm_context: bool = True) -> Dict[str, Any]:
         """
         Receives user queries and performs hybrid search and reranking.
         
         :param query: User search query
         :param top_k: Number of documents to return (after reranking)
         :param limit: Number of candidate documents to fetch from Qdrant (after RRF fusion, before reranking)
+        :param use_reranking: Whether to use reranking (if False, it will skip the reranking step and return Qdrant results directly, still mapped with SQLite data)
         :param include_llm_context: Whether to include LLM context in the response (formatted text for LLM consumption)
         :return: A dictionary containing the original query, a list of search results, and latency information. Each search result includes chunk_id, text, relevance score, and metadata.
         """
@@ -80,11 +81,15 @@ class HybridSearchService:
 
             # 5. Perform Cross-Encoder Reranking
             # Return a list sorted in descending order after recalculating context-based precise scores
-            reranked_docs = self.reranker.rerank(
-                query=query, 
-                documents=chunks_for_reranking, 
-                text_key="text"
-            )
+            if use_reranking:
+                reranked_docs = self.reranker.rerank(
+                    query=query, 
+                    documents=chunks_for_reranking, 
+                    text_key="text"
+                )
+            else:
+                # If reranking is disabled, use the Qdrant results directly
+                reranked_docs = chunks_for_reranking
 
             # 6. Top-K Truncation and Mapping to Pydantic Schema (SearchResultItem) Specification
             final_results = []
@@ -108,6 +113,8 @@ class HybridSearchService:
             if include_llm_context:
                 # 7. Optional: Format results into LLM-friendly context (Markdown/XML mixed format)
                 response["llm_context"] = self.format_for_llm(final_results)
+            
+            return response
 
         except Exception as e:
             # Wrap unexpected errors in custom errors and throw them to the router

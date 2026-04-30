@@ -13,7 +13,8 @@ class SearchRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=50)
 
     # optional
-    use_reranker: Optional[bool] = True
+    use_reranking: Optional[bool] = True
+    include_llm_context: Optional[bool] = True
 
 # ---------------------------
 # Document metadata
