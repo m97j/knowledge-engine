@@ -21,9 +21,10 @@ class Settings(BaseSettings):
     REPO_ID: str = Field(default="m97j/ke-store", description="Hugging Face repository ID")
 
     # 2. Storage Settings (Vector DB & RDBMS)
-    QDRANT_PATH: str = Field(default="./data/qdrant", description="Qdrant local storage path")
+    SQLITE_PATH: str = Field(default="{DATA_DIR}/knowledge_base/corpus.sqlite", description="SQLite DB file path")
+    QDRANT_PATH: str = Field(default="{DATA_DIR}/vector_store/qdrant", description="Qdrant local storage path")
     QDRANT_COLLECTION: str = Field(default="knowledge_base", description="Qdrant collection name")
-    SQLITE_PATH: str = Field(default="./data/corpus/corpus.sqlite", description="SQLite DB file path")
+    QDRANT_URL: str = Field(default="http://localhost:6333", description="Qdrant server URL (if using client-server mode)")
 
     # 3. Model Settings (Embedder & Reranker)
     EMBEDDER_NAME: str = Field(default="BAAI/bge-m3", description="FlagEmbedding model name")

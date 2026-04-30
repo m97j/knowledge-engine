@@ -13,13 +13,13 @@ class QdrantStorage:
     """
     Qdrant client performing hybrid search based on dense and sparse vectors
     """
-    def __init__(self, path: str, collection_name: str = "knowledge_base"):
-        self.path = path
+    def __init__(self, url: str, collection_name: str = "knowledge_base"):
+        self.url = url
         self.collection_name = collection_name
         try:
             # Local file system-based Qdrant connection (v1.10+)
-            self.client = QdrantClient(path=self.path)
-            logger.info(f"✅ Connected to local Qdrant at {self.path} (Collection: {self.collection_name})")
+            self.client = QdrantClient(url=self.url, timeout=60.0)
+            logger.info(f"✅ Connected to local Qdrant at {self.url} (Collection: {self.collection_name})")
         except Exception as e:
             logger.critical(f"❌ Qdrant connection failed: {e}")
             raise e

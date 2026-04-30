@@ -31,35 +31,40 @@ class SQLiteStorage:
         if not chunk_ids:
             return {}
 
-        placeholders = ",".join("?" * len(chunk_ids))
-        
-        query = f"""
-            SELECT 
-                c.chunk_id, c.text AS chunk_text,
-                d.doc_id, d.title, d.lang, d.url, d.date_modified
-            FROM chunks c
-            JOIN documents d ON c.doc_id = d.doc_id
-            WHERE c.chunk_id IN ({placeholders})
-        """
+        CHUNK_SIZE_LIMIT = 900  # SQLite has a default limit of 999 variables per query, so we use 900 to be safe
+        result_dict = {}
         
         try:
             cur = self.conn.cursor()
-            cur.execute(query, chunk_ids)
-            rows = cur.fetchall()
-            
-            # Transform the result into a dictionary for O(1) access: { chunk_id: { "text": "...", "metadata": {...} } }
-            result_dict = {}
-            for row in rows:
-                result_dict[row["chunk_id"]] = {
-                    "text": row["chunk_text"],
-                    "metadata": {
-                        "doc_id": row["doc_id"],
-                        "title": row["title"],
-                        "lang": row["lang"],
-                        "url": row["url"],
-                        "date_modified": row["date_modified"]
+
+            for i in range(0, len(chunk_ids), CHUNK_SIZE_LIMIT):
+                batch_ids = chunk_ids[i:i + CHUNK_SIZE_LIMIT]
+                placeholders = ",".join("?" * len(batch_ids))
+                query = f"""
+                    SELECT 
+                        c.chunk_id, c.text AS chunk_text,
+                        d.doc_id, d.title, d.lang, d.url, d.date_modified
+                    FROM chunks c
+                    JOIN documents d ON c.doc_id = d.doc_id
+                    WHERE c.chunk_id IN ({placeholders})
+                """
+
+                cur.execute(query, batch_ids)
+                rows = cur.fetchall()
+                
+                # Transform the result into a dictionary for O(1) access: { chunk_id: { "text": "...", "metadata": {...} } }
+                for row in rows:
+                    result_dict[row["chunk_id"]] = {
+                        "text": row["chunk_text"],
+                        "metadata": {
+                            "doc_id": row["doc_id"],
+                            "title": row["title"],
+                            "lang": row["lang"],
+                            "url": row["url"],
+                            "date_modified": row["date_modified"]
+                        }
                     }
-                }
+                    
             return result_dict
             
         except sqlite3.Error as e:

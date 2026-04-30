@@ -24,13 +24,15 @@ class HybridSearchService:
         self.embedder = embedder
         self.reranker = reranker
 
-    def search(self, query: str, top_k: int = 5, limit: int = 50) -> Dict[str, Any]:
+    def search(self, query: str, top_k: int = 5, limit: int = 50, include_llm_context: bool = True) -> Dict[str, Any]:
         """
         Receives user queries and performs hybrid search and reranking.
         
         :param query: User search query
         :param top_k: Number of documents to return (after reranking)
         :param limit: Number of candidate documents to fetch from Qdrant (after RRF fusion, before reranking)
+        :param include_llm_context: Whether to include LLM context in the response (formatted text for LLM consumption)
+        :return: A dictionary containing the original query, a list of search results, and latency information. Each search result includes chunk_id, text, relevance score, and metadata.
         """
         start_time = time.time()
         logger.info(f"🔍 Starting search pipeline for query: '{query}'")
@@ -97,11 +99,15 @@ class HybridSearchService:
             latency_ms = int((time.time() - start_time) * 1000)
             logger.info(f"✅ Search completed in {latency_ms}ms. Found {len(final_results)} final chunks.")
 
-            return {
+            response = {
                 "query": query,
                 "results": final_results,
                 "latency_ms": latency_ms
             }
+
+            if include_llm_context:
+                # 7. Optional: Format results into LLM-friendly context (Markdown/XML mixed format)
+                response["llm_context"] = self.format_for_llm(final_results)
 
         except Exception as e:
             # Wrap unexpected errors in custom errors and throw them to the router
@@ -113,6 +119,7 @@ class HybridSearchService:
         return {
             "query": query,
             "results": [],
+            "llm_context": "No relevant knowledge (documents) available.",
             "latency_ms": int((time.time() - start_time) * 1000)
         }
 
@@ -138,6 +145,7 @@ class HybridSearchService:
                 f"<doc id=\"{i}\" source=\"{source}\" "
                 f"url=\"{meta.get('url', 'N/A')}\" "
                 f"relevance_score=\"{res['score']}\">\n"
+                f"date_modified=\"{meta.get('date_modified', 'N/A')}\">\n"
                 f"{res['text']}\n"
                 f"</doc>"
             )

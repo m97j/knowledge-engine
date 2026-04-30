@@ -12,7 +12,6 @@ from core.exceptions import setup_exception_handlers
 from core.logger import setup_logger
 from models.embedder import TextEmbedder
 from models.reranker import TextReranker
-from scripts.setup_db import download_knowledge_base
 from services.search_service import HybridSearchService
 from storage.qdrant_client import QdrantStorage
 from storage.sqlite_client import SQLiteStorage
@@ -34,12 +33,8 @@ async def lifespan(app: FastAPI):
     sqlite_client = None
 
     try:
-        # 0. Prepare dependency data (DB) (Download if unavailable, skip if available)
-        logger.info("Checking and preparing Knowledge Base data...")
-        download_knowledge_base()
-
         # 1. Infrastructure Connection (Database)
-        qdrant_client = QdrantStorage(path=settings.QDRANT_PATH, collection_name=settings.QDRANT_COLLECTION)
+        qdrant_client = QdrantStorage(url=settings.QDRANT_URL, collection_name=settings.QDRANT_COLLECTION)
         sqlite_client = SQLiteStorage(db_path=settings.SQLITE_PATH)
         
         # 2. Load AI Model (Singleton)

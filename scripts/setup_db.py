@@ -6,6 +6,8 @@ import sys
 from huggingface_hub import snapshot_download
 from huggingface_hub.utils import HfHubHTTPError
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from core.config import settings
 from core.logger import setup_logger
 
@@ -34,8 +36,8 @@ def download_knowledge_base():
             repo_id=repo_id,
             repo_type="dataset",
             local_dir=local_dir,
-            allow_patterns=["corpus/*", "qdrant/*"],
-            ignore_patterns=["build_cache/*", ".gitattributes"],
+            allow_patterns=["knowledge_base/*", "vector_store/qdrant/*"],
+            ignore_patterns=["artifacts/*", ".gitattributes"],
             max_workers=4
         )
         logger.info(f"✅ Download complete! Data is ready at: {download_path}")
