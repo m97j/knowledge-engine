@@ -64,18 +64,24 @@ class TextEmbedder:
             dense_vec = output['dense_vecs'].tolist()
             lexical_weights: Dict[str, float] = output['lexical_weights']
             
-            # 2. Sparse Vector Transformation (Qdrant specifications: token_id array, weight array)
-            sparse_indices = []
-            sparse_values = []
+            # 2. Sparse Vector Transformation and Duplicate Index Removal
+            # Prevent duplicates by storing in the format {token_id: max_weight}
+            unique_sparse_data = {}
             
             # Convert text tokens into unique IDs (integers) using the BGE-M3 tokenizer
             for token_str, weight in lexical_weights.items():
                 # Get the ID of the string token through the tokenizer (vocab index)
                 token_id = self.model.tokenizer.convert_tokens_to_ids(token_str)
+                # If the same token_id appears, maintain the higher weight
                 if token_id is not None:
-                    sparse_indices.append(token_id)
-                    sparse_values.append(float(weight))
+                    unique_sparse_data[token_id] = max(
+                        unique_sparse_data.get(token_id, 0.0), 
+                        float(weight)
+                    )
                     
+            sparse_indices = list(unique_sparse_data.keys())
+            sparse_values = list(unique_sparse_data.values())
+
             return EmbedderResult(
                 dense_vector=dense_vec,
                 sparse_indices=sparse_indices,
