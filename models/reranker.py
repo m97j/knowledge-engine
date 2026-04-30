@@ -17,7 +17,6 @@ class TextReranker:
     def __init__(self, model_name: str = "BAAI/bge-reranker-v2-m3", use_fp16: bool = False):
         self.model_name = model_name
         self.device = self._get_device()
-        self._warmup()
         
         try:
             logger.info(f"⏳ Loading Reranker Model: {self.model_name} on {self.device}")
@@ -25,6 +24,7 @@ class TextReranker:
                 self.model_name, 
                 use_fp16=(use_fp16 and self.device.startswith("cuda"))
             )
+            self._warmup()
             logger.info("✅ Reranker Model loaded successfully.")
         except Exception as e:
             logger.critical(f"❌ Failed to load Reranker Model: {e}", exc_info=True)
