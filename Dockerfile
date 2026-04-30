@@ -11,6 +11,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     wget \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Download Qdrant Binaries (Based on v1.16.2, for Linux)
