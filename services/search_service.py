@@ -94,10 +94,11 @@ class HybridSearchService:
             # 6. Top-K Truncation and Mapping to Pydantic Schema (SearchResultItem) Specification
             final_results = []
             for doc in reranked_docs[:top_k]:
+                display_score = doc.get("rerank_score") if use_reranking else doc.get("rrf_score", 0.0)
                 final_results.append(SearchResultItem(
                     chunk_id=doc["chunk_id"],
                     text=doc["text"],
-                    score=round(doc["rerank_score"], 4), # Neatly rounded to 4 decimal places
+                    score=round(display_score, 4), # Neatly rounded to 4 decimal places
                     metadata=DocumentMetadata(**doc["metadata"])
                 ).model_dump()) # Convert to dict for FastAPI compatibility
 
