@@ -1,8 +1,9 @@
 # core/config.py
 
+import os
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,10 +22,26 @@ class Settings(BaseSettings):
     REPO_ID: str = Field(default="m97j/ke-store", description="Hugging Face repository ID")
 
     # 2. Storage Settings (Vector DB & RDBMS)
-    SQLITE_PATH: str = Field(default="{DATA_DIR}/knowledge_base/corpus.sqlite", description="SQLite DB file path")
-    QDRANT_PATH: str = Field(default="{DATA_DIR}/vector_store/qdrant", description="Qdrant local storage path")
     QDRANT_COLLECTION: str = Field(default="knowledge_base", description="Qdrant collection name")
     QDRANT_URL: str = Field(default="http://localhost:6333", description="Qdrant server URL (if using client-server mode)")
+
+    @computed_field
+    @property
+    def SQLITE_PATH(self) -> str:
+        """
+        Computed property to ensure that the SQLite path is always correctly resolved based on the DATA_DIR.
+        This allows dynamic changes to DATA_DIR without breaking the SQLITE_PATH reference.
+        """
+        return os.path.join(self.DATA_DIR, "knowledge_base/corpus.sqlite")
+    
+    @computed_field
+    @property
+    def QDRANT_PATH(self) -> str:
+        """
+        Computed property to ensure that the Qdrant path is always correctly resolved based on the DATA_DIR.
+        This allows dynamic changes to DATA_DIR without breaking the QDRANT_PATH reference.
+        """
+        return os.path.join(self.DATA_DIR, "vector_store/qdrant")
 
     # 3. Model Settings (Embedder & Reranker)
     EMBEDDER_NAME: str = Field(default="BAAI/bge-m3", description="FlagEmbedding model name")
